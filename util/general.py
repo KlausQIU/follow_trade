@@ -66,24 +66,6 @@ def mysqlConnection(func):
         mysqldb.insert(tableName, insert_data)
     return wrapper
 
-def influxdbConnection(func):
-    @functools.wraps(func)
-    def wrapper(self, *args, **kw):
-        self.client = InfluxDBClient("47.52.140.4", "8086", "klaus", "123456", "grafana_monitor")
-        res = func(self, *args, **kw)
-        self.client.close()
-        return res
-    return wrapper
-
-def influxdbOutConnection(func):
-    @functools.wraps(func)
-    def wrapper(self, *args, **kw):
-        self.client = InfluxDBClient("47.75.13.223", "8086", "rainbow", "rainbow@InfluxDB223", "monitor")
-        res = func(self, *args, **kw)
-        self.client.close()
-        return res
-    return wrapper
-
 
 def chooseCoinStr(coinType):
     return coinType
