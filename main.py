@@ -3,15 +3,10 @@
 
 import os
 import sys
-sys.path.append("arbitrage_future_spot")
+sys.path.append("../follow_trade")
 
 from api.futureApiService import FutureApi as future_api
 from api.apiService import Api as spot_api
-from api.smsService import Sms
-
-from util.log import dbLog,log,Log,update_db_future_order
-from util.async import async
-from db.connection import mysqldbConnection,influxdbConnection,influxdbOutConnection
 
 from pydash import collections
 import pandas as pd
