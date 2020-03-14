@@ -61,17 +61,6 @@ def get_timestamp():
     t = now.isoformat("T")
     return t[:-3] + "Z"
 
-# def get_timestamp():
-#     url = c.API_URL + c.SERVER_TIMESTAMP_URL
-#     response = requests.get(url)
-#     if response.status_code == 200:
-#         print response.json()
-#         import pdb;pdb.set_trace()
-#         return response.json()['iso']
-#     else:
-#         return ""
-
-
 def signature(timestamp, method, request_path, body, secret_key):
     if str(body) == '{}' or str(body) == 'None':
         body = ''
@@ -112,7 +101,7 @@ class OKEXFutureService():
                 for info in res.json():
                     if result.keys().__len__() == 3:
                         result["swap"] = "SWAP"
-                        with open("../exchange/okex/instrument.json","wb") as f:
+                        with open("../api/okex/instrument.json","wb") as f:
                             f.write(json.dumps(result))
                         return {"result":"success"}
                     if info["alias"] in result.keys():
@@ -123,7 +112,7 @@ class OKEXFutureService():
             return
 
     def get_instrument_id(self,contractType):
-        with open("../exchange/okex/instrument.json","rb") as f:
+        with open("../api/okex/instrument.json","rb") as f:
             info_dict = json.loads(f.read())
         return info_dict.get(contractType)
 

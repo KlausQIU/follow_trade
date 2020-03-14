@@ -5,8 +5,7 @@ import os
 import sys
 sys.path.append("../follow_trade")
 
-from api.futureApiService import FutureApi as future_api
-from api.apiService import Api as spot_api
+from exchange.okex.okexFutureApiV3 import OKEXFutureService as okf
 
 from pydash import collections
 import pandas as pd
@@ -40,27 +39,6 @@ class Follow:
                                 u'lever_rate': 20, u'sell_price_avg': 0.0, u'buy_available': 0.0, u'sell_price_cost': 0.0}
         self.last_buy_trade_amount = 0
         self.last_sell_trade_amount = 0
-
-    def write_record(self,clear=False):
-        path = "%s/%s"%(self.follow_account,self.exchange)
-
-        self.record = {"buy":self.buy_list,"sell":self.sell_list}
-        if clear:
-            self.record = {"buy":[],"sell":[]}
-        with open("%s/%s_%s.json"%(path,self.coin,self.strategy),"w") as f:
-            f.write(json.dumps(self.record))
-
-    def get_record(self):
-        path = "%s/%s"%(self.follow_account,self.exchange)
-        if not os.path.isdir(path):
-            os.makedirs(path)
-        try:
-            with open("%s/%s_%s.json"%(path,self.coin,self.strategy),"r") as f:
-                content = f.read()
-                return json.loads(content)
-        except BaseException as e:
-            print e
-            return {}
     
     def gen_params(self):
         cf = ConfigParser()
@@ -79,19 +57,16 @@ class Follow:
         self.default_data["contract_type"] = self.contractType
         self.default_data["lever_rate"] = 20 if self.contractMultiple == 1 else 10
 
-        self.trade_api = future_api(exchange=self.exchange,account_code=self.trade_account_code)
+        self.trade_api = okf(account=self.trade_account_code)
         for code in self.follow_account_codes:
-            self.__dict__["follow_api_%s"%(self.follow_account_codes.index(code) + 1)] = future_api(exchange=self.exchange,account_code=code)
+            self.__dict__["follow_api_%s"%(self.follow_account_codes.index(code) + 1)] = okf(account=code)
         for r in self.rates:
             self.__dict__["rate_%s"%(self.rates.index(r) + 1)] = float(r)
 
 
-
     def judge_account(self):
         trade_account = self.trade_api.accountInfo(self.coin)
-        #import pdb; pdb.set_trace()
         follow_account = self.follow_api_1.accountInfo(self.coin) # 第一个能获取到就行，其他不管
-        # follow_account_b = self.follow_api_b.accountInfo(self.coin)
         if not trade_account.has_key(self.coin) or not follow_account.has_key(self.coin):
             return
         self.handler_account(trade_account.get(self.coin),self.trade_account_code)
@@ -126,62 +101,29 @@ class Follow:
         data["freeze"] = float(c_info.get("freeze",0))
         data["available"] = float(c_info.get("available",0))
         self.show_info(data,Type="account",account=account_code)
-        #import pdb; pdb.set_trace()
-        self.insert_balance(data,"follow_trade_account","%s_%s_%s_%s"%(account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-        self.insert_out_balance(data,"follow_trade_account","%s_%s_%s_%s"%(account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
 
     def judge_position(self):
         trade_position = self.trade_api.position(self.symbol,contractType=self.contractType,Type=self.contractMultiple)
         follow_position = self.follow_api_1.position(self.symbol,contractType=self.contractType,Type=self.contractMultiple)
         
         self.trade_position = trade_position.get(self.contractType,{})
-        # print trade_position
-        # print follow_position
         if self.trade_position:
             self.show_info(self.trade_position,Type="position",account=self.trade_account_code)
-            self.insert_balance(self.trade_position,"follow_trade_info","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-            self.insert_out_balance(self.trade_position,"follow_trade_info","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
         else:
             # 空仓，填默认值
             self.show_info(self.default_data,Type="position",account=self.trade_account_code)
-            self.insert_balance(self.default_data,"follow_trade_info","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-            self.insert_out_balance(self.default_data,"follow_trade_info","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
         
         self.follow_position_1 = follow_position.get(self.contractType,{})
         if self.follow_position_1:
             self.show_info(self.follow_position_1,Type="position",account=self.follow_account_codes[0])
-            self.insert_balance(self.follow_position_1,"follow_trade_info","%s_%s_%s_%s"%(self.follow_account_codes[0],self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
         else:
             self.show_info(self.default_data,Type="position",account=self.follow_account_codes[0])
-            self.insert_balance(self.default_data,"follow_trade_info","%s_%s_%s_%s"%(self.follow_account_codes[0],self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
         
         for c in range(2,self.follow_account_codes.__len__() + 1):
             follow_position = eval("self.follow_api_%s.position(self.symbol,contractType=self.contractType,Type=self.contractMultiple)"%c)
             self.__dict__["follow_position_%s"%c] = follow_position.get(self.contractType,{})
             return True
         return True
-    
-    @influxdbConnection
-    def insert_balance(self,data,measurement,project):
-        dataList = [{'measurement': measurement,
-                        'tags': {
-                            'project': project
-                        },
-                        'fields': data
-                        }]
-        # print dataList
-        self.client.write_points(dataList)
-    
-    @influxdbOutConnection
-    def insert_out_balance(self,data,measurement,project):
-        dataList = [{'measurement': measurement,
-                        'tags': {
-                            'project': project
-                        },
-                        'fields': data
-                        }]
-        # print dataList
-        self.client.write_points(dataList)
 
 
     def start(self):
@@ -196,7 +138,6 @@ class Follow:
                 continue
             
             self.do_trade()
-            self.update_status()
             time.sleep(5)
 
     def do_trade(self):
@@ -247,20 +188,11 @@ class Follow:
             data["msg"] = "减 %s仓: 价格： %s  数量： %s"%("多" if Type == "buy" else "空",compare_price,diff_amount/rate)
             coin_count = round(diff_amount/compare_price/20,4)
             data["result"] = 1*coin_count if self.trade_position.get("%s_profit_lossratio"%Type) > 0 else -1 *coin_count
-        # self.insert_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-        # self.insert_out_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
 
 
     def update_trade_amount(self, price, amount, profit_rate, Type=None):
         temp_last_amount = self.__dict__["last_%s_trade_amount"%Type]
         data = {}
-        # if not temp_last_amount and amount:
-        #     # 开仓了。重置开单量
-        #     self.__dict__["last_%s_trade_amount"%Type] = amount
-        #     data["msg"] = "加 %s仓: 价格： %s  数量： %s"%("多" if Type == "buy" else "空",price,amount)
-        #     data["result"] = 0
-        #     self.insert_out_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-        #     return
         if temp_last_amount > amount:
             # 减仓了，记录
             diff_amount = temp_last_amount - amount
@@ -268,14 +200,10 @@ class Follow:
             coin_diff = round(diff_amount*10/price/20,4)
             data["result"] = int(1 * coin_diff) if profit_rate >0 else int(-1 * coin_diff)
             self.__dict__["last_%s_trade_amount"%Type] = amount
-            self.insert_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-            self.insert_out_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
             return
         if temp_last_amount < amount:
             diff_amount = amount - temp_last_amount
             data["msg"] = "加 %s仓: 价格: %s  数量： %s"%("多" if Type == "buy" else "空",price,diff_amount)
             data["result"] = 0
             self.__dict__["last_%s_trade_amount"%Type] = amount
-            self.insert_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
-            self.insert_out_balance(data,"follow_trade_msg","%s_%s_%s_%s"%(self.trade_account_code,self.symbol,self.contractType,"20" if self.contractMultiple == 1 else "10"))
             return
