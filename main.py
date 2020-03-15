@@ -153,7 +153,6 @@ class Follow:
 
 
     def _do_trade(self,follow_position,follow_api,rate,Type=None):
-        import pdb;pdb.set_trace()
         ticker = follow_api.get_ticker(self.symbol,contractType=self.contract_type)
         if not ticker or not ticker.has_key("buyOne"):
             return
@@ -163,22 +162,20 @@ class Follow:
             compare_price = ticker["buyOne"]
         
         trade_position = self.trade_position[self.symbol].get(self.buy_sell_short_long[Type])
-
         self.update_trade_amount(compare_price,trade_position.get("amount",0.0),\
-            trade_position.get("%ratio"),Type=Type)
+            trade_position.get("ratio"),Type=Type)
         
         follow_position = follow_position[self.symbol].get(self.buy_sell_short_long[Type])
 
         diff_amount = int(trade_position.get("amount",0.0) * rate - follow_position.get("amount",0.0))
 
-        if self.trade_position.get("amount",0.0) < 1/rate:
+        if trade_position.get("amount",0.0) < 1/rate:
             diff_amount = int(follow_position.get("amount",0.0) * -1)
 
         if not diff_amount:
             return
         data = {}
         if diff_amount > 0:
-            #import pdb;pdb.set_trace()
             insert = False
             if compare_price * 0.99 < trade_position.get("avg_price",0.0) and Type == "buy":
                 res = follow_api.buy(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
