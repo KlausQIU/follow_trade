@@ -157,10 +157,12 @@ class OKEXFutureService():
             print e
             return []
 
-    def buy(self,symbol,price,amount,contractType):
+    def buy(self,symbol,price,amount,contractType,matchPrice=False):
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
+        if matchPrice:
+            price = price * 1.03
         # 1:开多2:开空3:平多4:平空
         params = {"type": 1,"price":price,"size":amount,"instrument_id":symbol,"leverage":20}
         header = self.gen_header(c.POST,params,c.FUTURE_ORDER)
@@ -180,10 +182,12 @@ class OKEXFutureService():
             print e
             return {"result":"fail"}
     
-    def sell(self,symbol,price,amount,contractType):
+    def sell(self,symbol,price,amount,contractType,matchPrice=False):
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
+        if matchPrice:
+            price = price * 0.97
         # 1:开多2:开空3:平多4:平空
         params = {"type": 2,"price":price,"size":amount,"instrument_id":symbol,"leverage":20}
         header = self.gen_header(c.POST,params,c.FUTURE_ORDER)
@@ -203,11 +207,13 @@ class OKEXFutureService():
             print e
             return {"result":"fail"}
 
-    def ping_buy(self,symbol,price,amount,contractType):
+    def ping_buy(self,symbol,price,amount,contractType,matchPrice=False):
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
         # 1:开多2:开空3:平多4:平空
+        if matchPrice:
+            price = price * 0.97
         params = {"type": 3,"price":price,"size":amount,"instrument_id":symbol,"leverage":20}
         header = self.gen_header(c.POST,params,c.FUTURE_ORDER)
         try:
@@ -226,10 +232,12 @@ class OKEXFutureService():
             print e
             return {"result":"fail"}
 
-    def ping_sell(self,symbol,price,amount,contractType):
+    def ping_sell(self,symbol,price,amount,contractType,matchPrice=False):
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
+        if matchPrice:
+            price = price * 1.03
         # 1:开多2:开空3:平多4:平空
         params = {"type": 4,"price":price,"size":amount,"instrument_id":symbol,"leverage":20}
         header = self.gen_header(c.POST,params,c.FUTURE_ORDER)
