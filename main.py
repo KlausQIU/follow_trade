@@ -32,14 +32,14 @@ class Follow:
         self.exchange = exchange
         self.strategy = "follow"
         self.default_data = {u'sell_available': 0.0, u'buy_bond': 0.0, u'contract_id': 0, u'buy_price_avg': 0.0, 
-                                u'buy_amount': 0.0, u'buy_flatprice': 0.0, 
-                                u'symbol': u'eos/usdt', u'buy_profit_real': 0.0,
+                                u'buy_amount': 0.0, u'buy_flatprice': 0.0, u'buy_profit_real': 0.0,
                                  u'sell_amount':0.0, u'sell_profit_real': 0.0, 
                                  u'sell_bond': 0.0, u'sell_flatprice': 0.0, u'buy_price_cost': 0.0, u'sell_profit_lossratio': 0.0, 
                                  u'contract_type': u'quarter', u'create_date': 0, u'buy_profit_lossratio': 0.0, 
                                 u'lever_rate': 20, u'sell_price_avg': 0.0, u'buy_available': 0.0, u'sell_price_cost': 0.0}
         self.last_buy_trade_amount = 0
         self.last_sell_trade_amount = 0
+        self.buy_sell_short_long = {"buy": "long","sell":"short","short":"sell","long":"buy"}
     
     def gen_params(self):
         cf = ConfigParser()
@@ -160,14 +160,18 @@ class Follow:
             compare_price = ticker["sellOne"]
         else:
             compare_price = ticker["buyOne"]
+        
+        trade_position = self.trade_position.get(self.buy_sell_short_long[Type])
 
-        self.update_trade_amount(compare_price,self.trade_position.get("%s_amount"%Type,0.0),\
-            self.trade_position.get("%s_profit_lossratio"%Type),Type=Type)
+        self.update_trade_amount(compare_price,trade_position.get("amount",0.0),\
+            trade_position.get("%ratio"),Type=Type)
+        
+        follow_position = follow_position.get(self.buy_sell_short_long[Type])
 
-        diff_amount = int(self.trade_position.get("%s_amount"%Type,0.0) * rate - follow_position.get("%s_amount"%Type,0.0))
+        diff_amount = int(trade_position.get("amount",0.0) * rate - follow_position.get("amount",0.0))
 
-        if self.trade_position.get("%s_amount"%Type,0.0) < 1/rate:
-            diff_amount = int(follow_position.get("%s_amount"%Type,0.0) * -1)
+        if self.trade_position.get("amount",0.0) < 1/rate:
+            diff_amount = int(follow_position.get("amount",0.0) * -1)
 
         if not diff_amount:
             return
@@ -175,11 +179,11 @@ class Follow:
         if diff_amount > 0:
             #import pdb;pdb.set_trace()
             insert = False
-            if compare_price * 0.99 < self.trade_position.get("%s_price_avg"%Type,0.0) and Type == "buy":
+            if compare_price * 0.99 < trade_position.get("avg_price",0.0) and Type == "buy":
                 res = follow_api.buy(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
-            if compare_price * 1.01 > self.trade_position.get("%s_price_avg"%Type,0.0) and Type == "sell":
+            if compare_price * 1.01 > trade_position.get("avg_price",0.0) and Type == "sell":
                 res = follow_api.sell(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
@@ -195,7 +199,7 @@ class Follow:
             print "减仓: 数量: %s  结果: %s"%(diff_amount,res)
             data["msg"] = "减 %s仓: 价格： %s  数量： %s"%("多" if Type == "buy" else "空",compare_price,diff_amount/rate)
             coin_count = round(diff_amount/compare_price/20,4)
-            data["result"] = 1*coin_count if self.trade_position.get("%s_profit_lossratio"%Type) > 0 else -1 *coin_count
+            data["result"] = 1*coin_count if trade_position.get("ratio") > 0 else -1 *coin_count
             Log(self.coin,data["msg"])
 
 
