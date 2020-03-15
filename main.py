@@ -72,9 +72,9 @@ class Follow:
         # 判断是否有币
         #if not trade_account.has_key("right") or not follow_account.has_key("right"):
         #    return
-        
-        self.handler_account(trade_account.get(self.coin),self.trade_account_code)
-        self.handler_account(follow_account.get(self.coin),self.follow_account_codes[0])
+
+        self.handler_account(trade_account,self.trade_account_code)
+        self.handler_account(follow_account,self.follow_account_codes[0])
 
     def show_info(self, data, Type=None, account=None):
         if not Type:
@@ -104,8 +104,6 @@ class Follow:
         c_info = accountInfo.get(self.contract_type,{})
         data["profit"] = float(c_info.get("profit",0))
         data["unprofit"] = float(c_info.get("unprofit",0))
-        data["freeze"] = float(c_info.get("freeze",0))
-        data["available"] = float(c_info.get("available",0))
         self.show_info(data,Type="account",account=account_code)
 
     def judge_position(self):
