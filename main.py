@@ -88,8 +88,8 @@ class Follow:
             if not data.get(self.symbol):
                 print "主账号没有开仓"
                 return
-            duo = data["long"]
-            kong = data["kong"]
+            duo = data[self.symbol]["long"]
+            kong = data[self.symbol]["short"]
             msg += u"多仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(duo["avg_price"],
                                                                         duo["amount"],
                                                                         duo["boom"],
@@ -109,7 +109,6 @@ class Follow:
         self.show_info(data,Type="account",account=account_code)
 
     def judge_position(self):
-        import pdb;pdb.set_trace()
         trade_position = self.trade_api.getPosition(self.symbol,contractType=self.contract_type)
         follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type)
         
@@ -154,6 +153,7 @@ class Follow:
 
 
     def _do_trade(self,follow_position,follow_api,rate,Type=None):
+        import pdb;pdb.set_trace()
         ticker = follow_api.get_ticker(self.symbol,contractType=self.contract_type)
         if not ticker or not ticker.has_key("buyOne"):
             return
