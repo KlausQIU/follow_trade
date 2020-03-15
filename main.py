@@ -66,6 +66,7 @@ class Follow:
 
 
     def judge_account(self):
+        import pdb;pdb.set_trace()
         trade_account = self.trade_api.getAccountInfo(self.symbol,self.contract_type)
         follow_account = self.follow_api_1.getAccountInfo(self.symbol,self.contract_type) # 第一个能获取到就行，其他不管
         if not trade_account.has_key(self.coin) or not follow_account.has_key(self.coin):
@@ -104,8 +105,8 @@ class Follow:
         self.show_info(data,Type="account",account=account_code)
 
     def judge_position(self):
-        trade_position = self.trade_api.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
-        follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
+        trade_position = self.trade_api.getPosition(self.symbol,contractType=self.contract_type)
+        follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type)
         
         self.trade_position = trade_position.get(self.contract_type,{})
         if self.trade_position:
@@ -148,7 +149,7 @@ class Follow:
 
 
     def _do_trade(self,follow_position,follow_api,rate,Type=None):
-        ticker = follow_api.tickers(self.symbol,contractType=self.contract_type)
+        ticker = follow_api.get_ticker(self.symbol,contractType=self.contract_type)
         if not ticker or not ticker.has_key("buyOne"):
             return
         if Type == "buy":
