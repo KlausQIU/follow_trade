@@ -81,6 +81,7 @@ class OKEXFutureService():
     def __init__(self, account=None):
         self.account = account
         self.API_KEY, self.API_SECRET_KEY,self.PASSPHRASE = get_account_key("okex", self.account)
+        #self.update_instrument_id()
 
     def gen_header(self,method,params,request_path):
         timestamp = get_timestamp()
@@ -101,7 +102,7 @@ class OKEXFutureService():
                 for info in res.json():
                     if result.keys().__len__() == 3:
                         result["swap"] = "SWAP"
-                        with open("../api/okex/instrument.json","wb") as f:
+                        with open("api/okex/instrument.json","wb") as f:
                             f.write(json.dumps(result))
                         return {"result":"success"}
                     if info["alias"] in result.keys():
@@ -112,7 +113,7 @@ class OKEXFutureService():
             return
 
     def get_instrument_id(self,contractType):
-        with open("../api/okex/instrument.json","rb") as f:
+        with open("api/okex/instrument.json","rb") as f:
             info_dict = json.loads(f.read())
         return info_dict.get(contractType)
 
