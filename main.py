@@ -66,7 +66,6 @@ class Follow:
 
 
     def judge_account(self):
-        import pdb;pdb.set_trace()
         trade_account = self.trade_api.getAccountInfo(self.symbol,self.contract_type)
         follow_account = self.follow_api_1.getAccountInfo(self.symbol,self.contract_type) # 第一个能获取到就行，其他不管
         # 判断是否有币
@@ -82,7 +81,7 @@ class Follow:
             print "启动时间: %s 当前时间: %s  已启动: %s "%(self.startTime,now,now-self.startTime)
             return
         if Type == "account":
-            msg = u"账户: %s,剩余币数: %s, 已实现收益: %s"%(account,data["rights"],data["profit"])
+            msg = u"账户: %s,剩余币数: %s, 已实现收益: %s"%(account,data["right"],data["profit"])
             
         if Type == "position":
             msg = u"账户: %s \n"%account
@@ -100,13 +99,14 @@ class Follow:
 
     def handler_account(self,accountInfo,account_code):
         data= {}
-        data["rights"] = float(accountInfo["rights"])
+        data["right"] = float(accountInfo["right"])
         c_info = accountInfo.get(self.contract_type,{})
         data["profit"] = float(c_info.get("profit",0))
         data["unprofit"] = float(c_info.get("unprofit",0))
         self.show_info(data,Type="account",account=account_code)
 
     def judge_position(self):
+        import pdb;pdb.set_trace()
         trade_position = self.trade_api.getPosition(self.symbol,contractType=self.contract_type)
         follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type)
         
