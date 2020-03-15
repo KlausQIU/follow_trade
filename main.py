@@ -69,8 +69,10 @@ class Follow:
         import pdb;pdb.set_trace()
         trade_account = self.trade_api.getAccountInfo(self.symbol,self.contract_type)
         follow_account = self.follow_api_1.getAccountInfo(self.symbol,self.contract_type) # 第一个能获取到就行，其他不管
-        if not trade_account.has_key(self.coin) or not follow_account.has_key(self.coin):
-            return
+        # 判断是否有币
+        #if not trade_account.has_key("right") or not follow_account.has_key("right"):
+        #    return
+        
         self.handler_account(trade_account.get(self.coin),self.trade_account_code)
         self.handler_account(follow_account.get(self.coin),self.follow_account_codes[0])
 
