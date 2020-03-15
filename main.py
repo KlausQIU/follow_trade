@@ -104,8 +104,8 @@ class Follow:
         self.show_info(data,Type="account",account=account_code)
 
     def judge_position(self):
-        trade_position = self.trade_api.position(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
-        follow_position = self.follow_api_1.position(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
+        trade_position = self.trade_api.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
+        follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)
         
         self.trade_position = trade_position.get(self.contract_type,{})
         if self.trade_position:
@@ -121,7 +121,7 @@ class Follow:
             self.show_info(self.default_data,Type="position",account=self.follow_account_codes[0])
         
         for c in range(2,self.follow_account_codes.__len__() + 1):
-            follow_position = eval("self.follow_api_%s.position(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)"%c)
+            follow_position = eval("self.follow_api_%s.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)"%c)
             self.__dict__["follow_position_%s"%c] = follow_position.get(self.contract_type,{})
             return True
         return True
