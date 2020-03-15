@@ -14,7 +14,7 @@ from datetime import datetime
 
 def get_account_key(exchange, account=None):
     cf = ConfigParser()
-    cf.read('../config/%s.ini' % account)
+    cf.read('config/%s.ini' % account)
     apikey = cf.get('%s' % exchange, 'api_key')
     secretkey = cf.get('%s' % exchange, 'secret_key')
     if exchange == "okex":
