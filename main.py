@@ -85,6 +85,9 @@ class Follow:
             
         if Type == "position":
             msg = u"账户: %s \n"%account
+            if not data.get(self.symbol):
+                print "主账号没有开仓"
+                return
             duo = data["long"]
             kong = data["kong"]
             msg += u"多仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(duo["avg_price"],
