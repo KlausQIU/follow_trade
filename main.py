@@ -195,7 +195,7 @@ class Follow:
         elif diff_amount < 0:
             # 需要减仓 直接市价减
             diff_amount = abs(diff_amount)
-            res = eval("follow_api.liqui_%s(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)"%(Type))
+            res = eval("follow_api.ping_%s(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)"%(Type))
             print "减仓: 数量: %s  结果: %s"%(diff_amount,res)
             data["msg"] = "减 %s仓: 价格： %s  数量： %s"%("多" if Type == "buy" else "空",compare_price,diff_amount/rate)
             coin_count = round(diff_amount/compare_price/20,4)
