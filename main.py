@@ -162,12 +162,12 @@ class Follow:
         else:
             compare_price = ticker["buyOne"]
         
-        trade_position = self.trade_position.get(self.buy_sell_short_long[Type])
+        trade_position = self.trade_position[self.symbol].get(self.buy_sell_short_long[Type])
 
         self.update_trade_amount(compare_price,trade_position.get("amount",0.0),\
             trade_position.get("%ratio"),Type=Type)
         
-        follow_position = follow_position.get(self.buy_sell_short_long[Type])
+        follow_position = follow_position[self.symbol].get(self.buy_sell_short_long[Type])
 
         diff_amount = int(trade_position.get("amount",0.0) * rate - follow_position.get("amount",0.0))
 
