@@ -84,14 +84,16 @@ class Follow:
             
         if Type == "position":
             msg = u"账户: %s \n"%account
-            msg += u"多仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(data["buy_price_avg"],
-                                                                        data["buy_amount"],
-                                                                        data["buy_flatprice"],
-                                                                        data["buy_profit_lossratio"])
-            msg += u"空仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(data["sell_price_avg"],
-                                                                        data["sell_amount"],
-                                                                        data["sell_flatprice"],
-                                                                        data["sell_profit_lossratio"])
+            duo = data["long"]
+            kong = data["kong"]
+            msg += u"多仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(duo["avg_price"],
+                                                                        duo["amount"],
+                                                                        duo["boom"],
+                                                                        duo["ratio"])
+            msg += u"空仓 -- 均价: %s  数量: %s   爆仓价: %s   收益率: %s \n"%(kong["avg_price"],
+                                                                        kong["amount"],
+                                                                        kong["boom"],
+                                                                        kong["ratio"])
         print msg
 
     def handler_account(self,accountInfo,account_code):
