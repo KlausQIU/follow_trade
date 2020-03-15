@@ -14,7 +14,7 @@ import numpy as np
 import time
 import datetime
 import json
-from configparser import ConfigParser
+from ConfigParser import ConfigParser
 
 from copy import deepcopy
 import requests
