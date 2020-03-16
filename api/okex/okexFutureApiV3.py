@@ -234,6 +234,7 @@ class OKEXFutureService():
             return {"result":"fail"}
 
     def ping_sell(self,symbol,price,amount,contractType,matchPrice=False):
+        run_count = 0
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
@@ -245,6 +246,7 @@ class OKEXFutureService():
         try:
             res = requests.post(url, data=json.dumps(params), headers=header)
             if res.status_code == 200:
+                run_count = 0
                 data = res.json()
                 data["result"] = "success"
                 data["price"] = price
@@ -252,11 +254,18 @@ class OKEXFutureService():
                 data["contractType"] = contractType
                 return data
             else:
+                run_count += 1
                 print res.text
+                if run_count > 5:
+                    msg = ""
+                    Log(msg)
+                    return {}
+                self.ping_sell(symbol,price,amount,contractType,matchPrice=matchPrice)
                 return {}
         except BaseException as e:
             print e
             return {"result":"fail"} 
+
     def getPosition(self,symbol,contractType):
         instrument_id = self.get_instrument_id(contractType)
         instrument_id = symbol.replace("_","-").upper() + "-" + instrument_id
