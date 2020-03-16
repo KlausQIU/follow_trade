@@ -144,13 +144,22 @@ class Follow:
             self.show_info("")
             self.gen_params()
             self.judge_account()
+            self.judge_error_count()
             can_go = self.judge_position()
+            
             if not can_go:
                 time.sleep(5)
                 continue
             
             self.do_trade()
             time.sleep(5)
+
+    def judge_error_count(self):
+        with open("api/okex/error_count.json","rb") as f:
+            error_count = json.loads(f.read())
+        if int(error_count["error_count"]) > 5:
+            pass
+
 
     def do_trade(self):
         for c in range(1,self.follow_account_codes.__len__() + 1):
