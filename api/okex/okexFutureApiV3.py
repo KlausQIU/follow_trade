@@ -32,6 +32,9 @@ def gen_sign(message, secretKey):
     d = mac.digest()
     return base64.b64encode(d)
 
+def set_base_url():
+    c.API_URL = "https://aws.okex.com"
+
 
 def pre_hash(timestamp, method, request_path, body):
     return str(timestamp) + str.upper(method) + request_path + body
@@ -57,7 +60,7 @@ def parse_params_to_str(params):
 
 
 def get_timestamp():
-    now = datetime.datetime.now()
+    now = datetime.datetime.utcnow()
     t = now.isoformat("T")
     return t[:-3] + "Z"
 
@@ -220,6 +223,8 @@ class OKEXFutureService():
         try:
             res = requests.post(url, data=json.dumps(params), headers=header)
             if res.status_code == 200:
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps({"error_count": 0}))
                 data = res.json()
                 data["result"] = "success"
                 data["price"] = price
@@ -227,14 +232,18 @@ class OKEXFutureService():
                 data["contractType"] = contractType
                 return data
             else:
+                with open("api/okex/error_count.json","rb") as f:
+                    error_count = json.loads(f.read())
+                error_count["error_count"] += 1
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps(error_count))
                 print res.text
                 return {}
         except BaseException as e:
             print e
             return {"result":"fail"}
 
-    def ping_sell(self,symbol,price,amount,contractType,matchPrice=False):
-        run_count = 0
+    def ping_sell(self,symbol,price,amount,contractType,matchPrice=False,run_count = 0):
         url = c.API_URL + c.FUTURE_ORDER
         instrument_id = self.get_instrument_id(contractType)
         symbol = symbol.replace("_","-").upper() + "-" + instrument_id
@@ -246,7 +255,8 @@ class OKEXFutureService():
         try:
             res = requests.post(url, data=json.dumps(params), headers=header)
             if res.status_code == 200:
-                run_count = 0
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps({"error_count": 0}))
                 data = res.json()
                 data["result"] = "success"
                 data["price"] = price
@@ -254,13 +264,12 @@ class OKEXFutureService():
                 data["contractType"] = contractType
                 return data
             else:
-                run_count += 1
+                with open("api/okex/error_count.json","rb") as f:
+                    error_count = json.loads(f.read())
+                error_count["error_count"] += 1
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps(error_count))
                 print res.text
-                if run_count > 5:
-                    msg = ""
-                    Log(msg)
-                    return {}
-                self.ping_sell(symbol,price,amount,contractType,matchPrice=matchPrice)
                 return {}
         except BaseException as e:
             print e
@@ -275,6 +284,8 @@ class OKEXFutureService():
         try:
             res = requests.get(url, headers=header)
             if res.status_code == 200:
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps({"error_count": 0}))
                 if not res.json()["holding"]:
                     return {contractType:{symbol:{}}}
                 data = res.json()["holding"][0]
@@ -294,6 +305,11 @@ class OKEXFutureService():
                 }}
                 return result
             else:
+                with open("api/okex/error_count.json","rb") as f:
+                    error_count = json.loads(f.read())
+                error_count["error_count"] += 1
+                with open("api/okex/error_count.json","wb") as f:
+                    f.write(json.dumps(error_count))
                 print res.text
                 return {}
         except BaseException as e:
