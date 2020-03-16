@@ -98,6 +98,8 @@ class Follow:
                                                                         kong["amount"],
                                                                         kong["boom"],
                                                                         kong["ratio"])
+            print msg
+            return True
         print msg
 
     def handler_account(self,accountInfo,account_code):
@@ -113,17 +115,21 @@ class Follow:
         follow_position = self.follow_api_1.getPosition(self.symbol,contractType=self.contract_type)
         
         self.trade_position = trade_position.get(self.contract_type,{})
+        result = False
         if self.trade_position:
-            self.show_info(self.trade_position,Type="position",account=self.trade_account_code)
+            result = self.show_info(self.trade_position,Type="position",account=self.trade_account_code)
         else:
             # 空仓，填默认值
-            self.show_info(self.default_data,Type="position",account=self.trade_account_code)
+            result = self.show_info(self.default_data,Type="position",account=self.trade_account_code)
         
         self.follow_position_1 = follow_position.get(self.contract_type,{})
         if self.follow_position_1:
-            self.show_info(self.follow_position_1,Type="position",account=self.follow_account_codes[0])
+            result = self.show_info(self.follow_position_1,Type="position",account=self.follow_account_codes[0])
         else:
-            self.show_info(self.default_data,Type="position",account=self.follow_account_codes[0])
+            result = self.show_info(self.default_data,Type="position",account=self.follow_account_codes[0])
+        
+        if not result:
+            return 
         
         for c in range(2,self.follow_account_codes.__len__() + 1):
             follow_position = eval("self.follow_api_%s.getPosition(self.symbol,contractType=self.contract_type,Type=self.contractMultiple)"%c)
@@ -162,18 +168,23 @@ class Follow:
             compare_price = ticker["buyOne"]
         
         trade_position = self.trade_position[self.symbol].get(self.buy_sell_short_long[Type])
-        self.update_trade_amount(compare_price,trade_position.get("amount",0.0),\
-            trade_position.get("ratio"),Type=Type)
-        
-        follow_position = follow_position[self.symbol].get(self.buy_sell_short_long[Type])
+        try:
+            self.update_trade_amount(compare_price,trade_position.get("amount"),\
+                trade_position.get("ratio"),Type=Type)
+            
+            follow_position = follow_position[self.symbol].get(self.buy_sell_short_long[Type])
 
-        diff_amount = int(trade_position.get("amount",0.0) * rate - follow_position.get("amount",0.0))
+            diff_amount = int(trade_position.get("amount") * rate - follow_position.get("amount"))
 
-        if trade_position.get("amount",0.0) < 1/rate:
-            diff_amount = int(follow_position.get("amount",0.0) * -1)
+            if trade_position.get("amount") < 1/rate:
+                diff_amount = int(follow_position.get("amount") * -1)
 
-        if not diff_amount:
-            return
+            if not diff_amount:
+                return
+        except BaseException as e:
+            print e
+            return 
+
         data = {}
         if diff_amount > 0:
             insert = False
@@ -181,7 +192,7 @@ class Follow:
                 res = follow_api.buy(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
-            if compare_price * 1.01 > trade_position.get("avg_price",0.0) and Type == "sell":
+            if compare_price * 1.01 > trade_position.get("avg_price",100000) and Type == "sell":
                 res = follow_api.sell(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
