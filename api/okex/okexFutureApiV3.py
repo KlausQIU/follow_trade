@@ -73,7 +73,7 @@ def signature(timestamp, method, request_path, body, secret_key):
     d = mac.digest()
     return base64.b64encode(d)
 
-order_status_dict = {-2:"fail",-1:"canceled",0:"submit" ,1:"partial", 2:"done",3:"submit",4:"cancel","canceled":-1,"done":2,"submit":0}
+order_status_dict = {-2:"fail",-1:"canceled",0:"submit" ,1:"partial", 2:"done",3:"submit",4:"cancel","canceled":-1,"done":2,"submit":0,"partial":1}
 granularity_dict = {"1min":60,"3min":180,"5min":300, "15min": 900,
  "30min":1800,"1hour":3600,"2hour":7200,"4hour":14400,"6hour":21600,"12hour":43200,"1day":86400,"1week": 604800}
 # 1:开多2:开空3:平多4:平空
@@ -380,7 +380,41 @@ class OKEXFutureService():
             print e
             return {"result":"fail"}
 
-    def getOrders(self,symbol, contractType,state="done",limit=10):
+    def getDoneOrders(self,symbol, contractType,state="done",limit=10):
+        '''
+        instrument_id	String	是	合约ID，如BTC-USD-180213 ,BTC-USDT-191227
+        state	String	是	订单状态
+                            -2:失败
+                            -1:撤单成功
+                            0:等待成交
+                            1:部分成交
+                            2:完全成交
+                            3:下单中
+                            4:撤单中
+                            6: 未完成（等待成交+部分成交）
+                            7:已完成（撤单成功+完全成交）
+        after	String	否	请求此id之前(更旧的数据)的分页内容，传的值为对应接口的order_id；
+        before	String	否	请求此id之后(更新的数据)的分页内容，传的值为对应接口的order_id；	
+        limit	String	否	分页返回的结果集数量，最大为100，不填默认返回100条
+        '''
+        instrument_id = self.get_instrument_id(contractType)
+        instrument_id = symbol.replace("_","-").upper() + "-" + instrument_id
+        state = order_status_dict.get(state,2)
+        # BTC-USD-190628?state=2&after=2517062044057601&limit=2
+        request_url =  c.FUTURE_ORDER_INFO + instrument_id + "?" + "state=%s"%state + "&limit=%s"%limit
+        url = c.API_URL + request_url
+        header = self.gen_header(c.GET,{},request_url)
+        try:
+            res = requests.get(url, headers = header)
+            if res.status_code == 200:
+                data = res.json()
+                return data
+            return {}
+        except BaseException as e:
+            print e
+            return {"result":"fail"}
+
+    def getPartialOrders(self,symbol, contractType,state="partial",limit=10):
         '''
         instrument_id	String	是	合约ID，如BTC-USD-180213 ,BTC-USDT-191227
         state	String	是	订单状态
