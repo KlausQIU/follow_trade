@@ -197,11 +197,11 @@ class Follow:
         data = {}
         if diff_amount > 0:
             insert = False
-            if compare_price * 0.99 < trade_position.get("avg_price",0.0) and Type == "buy":
+            if compare_price * 0.99 < trade_position.get("avg_price",0.0) and Type == "buy" and float(trade_position.get("ratio")) > 0.0:
                 res = follow_api.buy(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
-            if compare_price * 1.01 > trade_position.get("avg_price",100000) and Type == "sell":
+            if compare_price * 1.01 > trade_position.get("avg_price",100000) and Type == "sell" and float(trade_position.get("ratio")) > 0.0: 
                 res = follow_api.sell(self.symbol,compare_price,diff_amount,contractType=self.contract_type,matchPrice=True)
                 print "%s加仓: %s"%(Type,res)
                 insert = True
