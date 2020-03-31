@@ -293,16 +293,21 @@ class OKEXFutureService():
                 result[contractType] = {symbol: {"long":{
                     "amount": float(data["long_qty"]),
                     "available": float(data["long_avail_qty"]),
-                    "boom": float(data["long_liqui_price"]),
                     "ratio": float(data["long_pnl_ratio"]) * 100,
                     "avg_price": float(data["long_avg_cost"])
                 },"short": {
                     "amount": float(data["short_qty"]),
                     "available": float(data["short_avail_qty"]),
-                    "boom": float(data["short_liqui_price"]),
                     "ratio": float(data["short_pnl_ratio"]) * 100,
                     "avg_price": float(data["short_avg_cost"])}
                 }}
+                if data["margin_mode"] == "crossed":
+                    result[contractType][symbol]["long"]["boom"] = float(data["liquidation_price"])
+                    result[contractType][symbol]["short"]["boom"] = float(data["liquidation_price"])
+                else:
+                    result[contractType][symbol]["long"]["boom"] = float(data["long_liqui_price"])
+                    result[contractType][symbol]["short"]["boom"] = float(data["short_liqui_price"])
+
                 return result
             else:
                 with open("api/okex/error_count.json","rb") as f:
@@ -330,7 +335,9 @@ class OKEXFutureService():
                 result = {}
                 result["symbol"] = symbol
                 result["right"] = float(data["equity"])
-                result["auto_margin"] =  int(data["auto_margin"])
+                result["margin_mode"] = res.json()["margin_mode"]
+                if data["margin_mode"] != "crossed":
+                    result["auto_margin"] =  int(data["auto_margin"])
                 if data["contracts"]:
                     d = data["contracts"][0]
                     result["profit"] = float(d["realized_pnl"])
