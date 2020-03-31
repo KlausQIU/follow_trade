@@ -338,10 +338,13 @@ class OKEXFutureService():
                 result["margin_mode"] = res.json()["margin_mode"]
                 if data["margin_mode"] != "crossed":
                     result["auto_margin"] =  int(data["auto_margin"])
-                if data["contracts"]:
-                    d = data["contracts"][0]
-                    result["profit"] = float(d["realized_pnl"])
-                    result["unprofit"] = float(d["unrealized_pnl"])
+                    if data["contracts"]:
+                        d = data["contracts"][0]
+                        result["profit"] = float(d["realized_pnl"])
+                        result["unprofit"] = float(d["unrealized_pnl"])
+                else:
+                    result["profit"] = float(data["realized_pnl"])
+                    result["unprofit"] = float(data["unrealized_pnl"])
                 return result
             return {}
         except BaseException as e:
